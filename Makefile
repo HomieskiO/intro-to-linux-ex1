@@ -1,32 +1,39 @@
-# Compiler settings
-CXX           := g++
-CXXFLAGS      := -std=c++17 -fPIC -Isrc
-LDFLAGS_SHARED:= -shared
+# Compiler settings (overrideable from CLI)
+CXX            ?= g++
+CXXFLAGS       ?= -std=c++17 -fPIC -I$(SRCDIR)
+LDFLAGS_SHARED ?= -shared
 
 # Directories
-SRCDIR        := src
-BUILDDIR      := build
-BINDIR        := bin
+SRCDIR   := src
+BUILDDIR := build
+BINDIR   := bin
 
-# Library
-LIBNAME       := libblockchain_utils.so
-LIBOBJ        := $(BUILDDIR)/blockchain_utils.o
+# Library settings
+LIB_NAME := blockchain_utils
+LIB_SO   := $(BUILDDIR)/lib$(LIB_NAME).so
+LIB_OBJS := $(BUILDDIR)/$(LIB_NAME).o
 
-# Executables
-EXES          := printDatabase blockFinder refreshDatabase bitcoinShell
-EXES_BIN      := $(addprefix $(BINDIR)/,$(EXES))
+# Gather all .cpp files
+SRC_CPP   := $(wildcard $(SRCDIR)/*.cpp)
+# Exclude the library implementation from executables
+EXE_SRCS  := $(filter-out $(SRCDIR)/$(LIB_NAME).cpp,$(SRC_CPP))
+# Derive executable names (basename of each .cpp)
+EXES      := $(patsubst $(SRCDIR)/%.cpp,%,$(EXE_SRCS))
+EXES_BIN  := $(addprefix $(BINDIR)/,$(EXES))
 
 # Default target
-all: dirs $(BUILDDIR)/$(LIBNAME) $(EXES_BIN)
+.PHONY: all
+all: dirs $(LIB_SO) $(EXES_BIN)
 	@echo
 	@echo "Build ended successfully!"
 
-# Create directories if missing
+# Create output dirs
+.PHONY: dirs
 dirs:
 	@mkdir -p $(BUILDDIR) $(BINDIR)
 
 # Build the shared library
-$(BUILDDIR)/$(LIBNAME): $(LIBOBJ)
+$(LIB_SO): $(LIB_OBJS)
 	$(CXX) $(LDFLAGS_SHARED) -o $@ $^
 
 # Compile library object
@@ -34,9 +41,9 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp $(SRCDIR)/%.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Build each executable, linking against the shared lib
-$(BINDIR)/%: $(SRCDIR)/%.cpp $(BUILDDIR)/$(LIBNAME)
+$(BINDIR)/%: $(SRCDIR)/%.cpp $(LIB_SO)
 	$(CXX) $(CXXFLAGS) -o $@ $< \
-	  -L$(BUILDDIR) -lblockchain_utils \
+	  -L$(BUILDDIR) -l$(LIB_NAME) \
 	  -Wl,-rpath,'$$ORIGIN/../build'
 
 # Run the interactive shell
@@ -44,7 +51,7 @@ $(BINDIR)/%: $(SRCDIR)/%.cpp $(BUILDDIR)/$(LIBNAME)
 run: $(BINDIR)/bitcoinShell
 	@$(BINDIR)/bitcoinShell
 
-# Clean out everything in build/ and bin/
+# Clean everything
 .PHONY: clean
 clean:
-	rm -rf $(BUILDDIR) $(BINDIR)
+	@rm -rf $(BUILDDIR) $(BINDIR)
