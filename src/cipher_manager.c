@@ -28,9 +28,6 @@ size_t g_ciphertext_len = 0;
 CrackResult *g_plaintext_candidate = NULL;
 int g_password_cracked_or_timeout = 0;
 
-pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t g_new_cipher_cond = PTHREAD_COND_INITIALIZER;
-
 int g_num_decrypters = 0;
 int g_password_len = 0; // must be multiple of 8
 int g_timeout_secs = 0; // 0 = no timeout
@@ -178,63 +175,4 @@ void print_configuration(void)
     printf("  Password length (bytes)     : %d\n", g_password_len);
     printf("  Timeout (seconds)           : %d\n", g_timeout_secs);
     printf("--------------------------------------------------\n");
-}
-
-// Create encrypter thread, exit on failure
-pthread_t create_encrypter_thread(void)
-{
-    pthread_t thread;
-    if (pthread_create(&thread, NULL, encrypter_thread_fn, NULL) != 0)
-    {
-        perror("pthread_create(encrypter)");
-        exit(EXIT_FAILURE);
-    }
-    return thread;
-}
-
-// Create decrypter threads, exit on failure
-pthread_t *create_decrypter_threads(int num)
-{
-    pthread_t *threads = malloc(sizeof(pthread_t) * num);
-    if (!threads)
-    {
-        fprintf(stderr, "Error: malloc(decrypters array)\n");
-        exit(EXIT_FAILURE);
-    }
-    for (long i = 0; i < num; i++)
-    {
-        if (pthread_create(&threads[i], NULL, decrypter_thread_fn, (void *)i) != 0)
-        {
-            fprintf(stderr, "Error: pthread_create(decrypter %ld)\n", i);
-            exit(EXIT_FAILURE);
-        }
-    }
-    return threads;
-}
-
-// Join all threads
-void join_threads(pthread_t encrypter_thread, pthread_t *decrypters, int num)
-{
-    pthread_join(encrypter_thread, NULL);
-    for (int i = 0; i < num; i++)
-    {
-        pthread_join(decrypters[i], NULL);
-    }
-    free(decrypters);
-}
-
-int main(int argc, char **argv)
-{
-    parse_command_line(argc, argv);
-
-    print_configuration();
-
-    MTA_crypt_init();
-
-    pthread_t encrypter_thread = create_encrypter_thread();
-    pthread_t *decrypters = create_decrypter_threads(g_num_decrypters);
-
-    join_threads(encrypter_thread, decrypters, g_num_decrypters);
-
-    return 0;
 }

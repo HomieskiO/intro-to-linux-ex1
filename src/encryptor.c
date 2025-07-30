@@ -9,6 +9,7 @@
 #include "cipher_manager.h"
 #include "mta_crypt.h"
 #include "mta_rand.h"
+#include <linux/time.h>
 
 struct timespec now, deadline;
 
