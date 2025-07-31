@@ -1,0 +1,33 @@
+# Compiler and flags
+CC      := gcc
+CFLAGS  := -std=c11 -pthread -Wall -Wextra -g
+
+# Target executable
+TARGET  := encryptor
+
+# Single source and object
+SRCS    := new_encryptor.c
+OBJS    := $(SRCS:.c=.o)
+
+# Libraries
+LIBS    := -lmta_crypt -lmta_rand -lcrypto
+
+.PHONY: all clean
+
+all: $(TARGET)
+	@echo "$(TARGET) is up to date!"
+
+# Link step
+$(TARGET): $(OBJS)
+	@echo "Linking $@..."
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+	@echo "Build complete!"
+
+# Compile step
+%.o: %.c
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	@rm -f $(OBJS) $(TARGET)
+	@echo "Cleaned up build artifacts."
