@@ -22,9 +22,19 @@ RUN make -f Makefile.enc
 FROM ubuntu:22.04
 WORKDIR /app
 
-# Copy built binary from builder stage
+# Install runtime dependencies if needed
+RUN apt-get update && apt-get install -y \
+    libc6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy built binary from builder stage - FIXED: correct binary name
 COPY --from=builder /app/new_encryptor .
+
+# Copy MTA libraries from builder if they exist
+COPY --from=builder /usr/lib/libmta* /usr/lib/ 2>/dev/null || true
+
+# Create required directories
+RUN mkdir -p /mnt/mta /var/log
 
 # Default command
 CMD ["./new_encryptor"]
-

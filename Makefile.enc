@@ -2,8 +2,8 @@
 CC      := gcc
 CFLAGS  := -std=c11 -pthread -Wall -Wextra -g
 
-# Target executable
-TARGET  := encryptor
+# Target executable - FIXED: should match the source filename
+TARGET  := new_encryptor
 
 # Single source and object
 SRCS    := new_encryptor.c

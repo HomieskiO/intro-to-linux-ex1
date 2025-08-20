@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <mta_crypt.h>  // FIXED: Added missing include
+#include <mta_rand.h>   // FIXED: Added missing include
 #include "new_decryptor.h"
 
 
@@ -89,6 +91,9 @@ void brute_force(const char *ciphertext, size_t cipher_len, const char *out_pipe
 }
 
 int main() {
+    // FIXED: Initialize MTA crypto system
+    MTA_crypt_init();
+
     // Find next available ID
     int id = find_next_vacant_id();
     if (id < 0) { fprintf(stderr, "No available decrypter IDs\n"); exit(1); }
