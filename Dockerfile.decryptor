@@ -1,0 +1,32 @@
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    make \
+    dpkg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY . .
+
+RUN dpkg -i MTA.deb
+
+# Build decryptor binary (adjust Makefile name if different)
+RUN make -f Makefile.dec
+
+# Stage 2: Runtime
+FROM ubuntu:22.04
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
+
+# Copy decryptor binary from builder stage
+COPY --from=builder /app/new_decryptor .
+
+RUN mkdir -p /mnt/mta /var/log
+
+CMD ["./new_decryptor"]
+

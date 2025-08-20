@@ -89,6 +89,9 @@ void brute_force(const char *ciphertext, size_t cipher_len, const char *out_pipe
 }
 
 int main() {
+    // FIXED: Initialize MTA crypto system
+    MTA_crypt_init();
+
     // Find next available ID
     int id = find_next_vacant_id();
     if (id < 0) { fprintf(stderr, "No available decrypter IDs\n"); exit(1); }
