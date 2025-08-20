@@ -6,8 +6,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <mta_crypt.h>  // FIXED: Added missing include
-#include <mta_rand.h>   // FIXED: Added missing include
 #include "new_decryptor.h"
 
 

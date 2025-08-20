@@ -1,0 +1,34 @@
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    make \
+    dpkg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy all source files including MTA.deb
+COPY . .
+
+# Install MTA.deb for dependencies and headers
+RUN dpkg -i MTA.deb
+
+# Build the encryptor binary using Makefile.enc
+RUN make -f Makefile.enc
+
+# Stage 2: Runtime
+FROM ubuntu:22.04
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
+
+# Copy built encryptor binary from builder stage
+COPY --from=builder /app/new_encryptor .
+
+RUN mkdir -p /mnt/mta /var/log
+
+CMD ["./new_encryptor"]
+
